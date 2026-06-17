@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Oswald } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/lib/config";
+import { getSettings } from "@/lib/store";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,23 +23,48 @@ const displayFont = Oswald({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: `${siteConfig.name} — ${siteConfig.tagline}`,
-  description: `Lista de precios de ${siteConfig.name}.`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const tagline = settings.tagline ?? siteConfig.tagline;
+  return {
+    title: `${siteConfig.name} — ${tagline}`,
+    description: `Lista de precios de ${siteConfig.name}.`,
+  };
+}
 
-export default function RootLayout({
+function primaryColorStyle(hue: number): string {
+  const h = hue;
+  return [
+    `:root{`,
+    `--primary:oklch(0.34 0.078 ${h});`,
+    `--primary-foreground:oklch(0.98 0.005 ${h});`,
+    `--ring:oklch(0.34 0.078 ${h});`,
+    `--accent:oklch(0.92 0.03 ${h});`,
+    `--accent-foreground:oklch(0.34 0.078 ${h});`,
+    `--secondary-foreground:oklch(0.32 0.05 ${h});`,
+    `}`,
+  ].join("");
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getSettings();
+  const waPhone = settings.whatsapp ?? siteConfig.whatsapp;
+
   return (
     <html
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} ${displayFont.variable} h-full antialiased`}
     >
+      {settings.primaryHue != null && (
+        <style dangerouslySetInnerHTML={{ __html: primaryColorStyle(settings.primaryHue) }} />
+      )}
       <body className="min-h-full flex flex-col bg-background">
         {children}
+        {waPhone && <WhatsAppButton phone={waPhone} />}
         <Toaster richColors position="top-center" />
       </body>
     </html>

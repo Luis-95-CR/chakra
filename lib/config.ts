@@ -16,4 +16,10 @@ export const siteConfig = {
   currency: "CRC",
   /** Locale used for number/date formatting. */
   locale: "es-CR",
-} as const;
+  /**
+   * Default WhatsApp number (international format, digits only).
+   * Overridden by the value saved in the admin panel.
+   * Set to "" to hide the button until configured from admin.
+   */
+  whatsapp: "",
+} satisfies Record<string, string>;

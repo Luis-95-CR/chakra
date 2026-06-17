@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { isAuthenticated } from "@/lib/session";
-import { getCatalog } from "@/lib/store";
+import { getCatalog, getSettings } from "@/lib/store";
 import { formatDate } from "@/lib/format";
 import { LoginForm } from "./login-form";
 import { AdminPanel } from "./admin-panel";
@@ -17,11 +18,15 @@ export default async function AdminPage() {
         <main className="flex flex-1 items-center justify-center px-4 py-12">
           <LoginForm />
         </main>
+        <SiteFooter />
       </>
     );
   }
 
-  const { products, lastUploadAt } = await getCatalog();
+  const [{ products, lastUploadAt }, settings] = await Promise.all([
+    getCatalog(),
+    getSettings(),
+  ]);
 
   return (
     <>
@@ -30,8 +35,10 @@ export default async function AdminPage() {
         <AdminPanel
           currentCount={products.length}
           lastUploadAt={products.length > 0 ? formatDate(lastUploadAt) : null}
+          settings={settings}
         />
       </main>
+      <SiteFooter />
     </>
   );
 }

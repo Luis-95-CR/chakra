@@ -2,7 +2,7 @@ import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { Redis } from "@upstash/redis";
-import type { Catalog } from "./types";
+import type { Catalog, SiteSettings } from "./types";
 
 // The whole catalog lives under a single key, since uploads replace it wholesale.
 const CATALOG_KEY = "catalog";
@@ -56,4 +56,33 @@ export async function saveCatalog(catalog: Catalog): Promise<void> {
     return;
   }
   await writeLocal(catalog);
+}
+
+// ── Site settings ────────────────────────────────────────────────────────────
+
+const SETTINGS_KEY = "settings";
+const settingsFile = path.join(process.cwd(), ".data", "settings.json");
+
+/** Reads the current site settings. Never throws: returns empty object instead. */
+export async function getSettings(): Promise<SiteSettings> {
+  if (redis) {
+    const data = await redis.get<SiteSettings>(SETTINGS_KEY);
+    return data ?? {};
+  }
+  try {
+    const raw = await fs.readFile(settingsFile, "utf8");
+    return JSON.parse(raw) as SiteSettings;
+  } catch {
+    return {};
+  }
+}
+
+/** Persists site settings. */
+export async function saveSettings(settings: SiteSettings): Promise<void> {
+  if (redis) {
+    await redis.set(SETTINGS_KEY, settings);
+    return;
+  }
+  await fs.mkdir(path.dirname(settingsFile), { recursive: true });
+  await fs.writeFile(settingsFile, JSON.stringify(settings, null, 2), "utf8");
 }

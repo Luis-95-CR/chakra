@@ -16,20 +16,20 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          <Logo className="size-14 text-primary" />
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:h-20 sm:px-6">
+        <Link href="/" className="flex items-center gap-2.5 sm:gap-3">
+          <Logo className="size-10 text-primary sm:size-14" />
           <span className="flex flex-col leading-tight">
-            <span className="font-display text-2xl font-semibold uppercase tracking-wide">
+            <span className="font-display text-base font-semibold uppercase tracking-wide sm:text-2xl">
               {siteConfig.name}
             </span>
-            <span className="text-[14px] font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="hidden text-[14px] font-medium uppercase tracking-wider text-muted-foreground sm:block">
               Granja Porcina
             </span>
           </span>
         </Link>
 
-        <nav className="flex items-center gap-8">
+        <nav className="flex items-center gap-3 sm:gap-8">
           {NAV.map((item) => {
             const active =
               item.href === "/"
@@ -40,7 +40,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative px-1 py-2 text-sm font-semibold transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300",
+                  "relative px-1 py-2 text-xs font-semibold sm:text-sm transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300",
                   active
                     ? "text-foreground after:w-full"
                     : "text-muted-foreground hover:text-foreground",

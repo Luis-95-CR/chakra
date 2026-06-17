@@ -121,15 +121,15 @@ export function CatalogClient({
             const Icon = categoryIcon(name);
             return (
               <section key={name} className="space-y-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="flex items-center gap-3 border-b pb-3">
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="size-4" />
                   </span>
                   <h2 className="font-display text-xl font-semibold tracking-tight">
                     {name}
                   </h2>
-                  <span className="text-sm text-muted-foreground">
-                    ({items.length})
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {items.length}
                   </span>
                 </div>
                 <ProductGrid products={items} />
@@ -147,8 +147,14 @@ export function CatalogClient({
 function ProductGrid({ products }: { products: Product[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {products.map((product, i) => (
+        <div
+          key={product.id}
+          className="animate-in fade-in-0 slide-in-from-bottom-4 fill-mode-both duration-500 h-full"
+          style={{ animationDelay: `${Math.min(i * 40, 320)}ms` }}
+        >
+          <ProductCard product={product} />
+        </div>
       ))}
     </div>
   );

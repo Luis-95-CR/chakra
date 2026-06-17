@@ -33,3 +33,11 @@ export const PRICE_FIELDS = [
 }>;
 
 export type PriceFieldKey = (typeof PRICE_FIELDS)[number]["key"];
+
+/** Site-wide settings editable from the admin panel. */
+export type SiteSettings = {
+  whatsapp?: string;
+  tagline?: string;
+  /** Primary color hue (0–360). Drives the whole primary palette via oklch. */
+  primaryHue?: number;
+};

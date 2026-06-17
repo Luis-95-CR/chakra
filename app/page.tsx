@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Leaf, Truck, Scale, ShieldCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { SiteFooter } from "@/components/site-footer";
+import {
+  FaLeaf,
+  FaShieldHalved,
+  FaScaleBalanced,
+  FaTruck,
+} from "react-icons/fa6";
 import { SiteHeader } from "@/components/site-header";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -15,22 +22,22 @@ const HERO_CATEGORIES = ["Res", "Cerdo", "Pollo"];
 
 const VALUE_PROPS = [
   {
-    icon: Leaf,
+    icon: FaLeaf,
     title: "De la finca",
     text: "Animales criados con cuidado en nuestra granja porcina familiar.",
   },
   {
-    icon: ShieldCheck,
+    icon: FaShieldHalved,
     title: "Calidad garantizada",
     text: "Cortes frescos y seleccionados, manejados con los más altos estándares.",
   },
   {
-    icon: Scale,
+    icon: FaScaleBalanced,
     title: "Mayoreo y detalle",
     text: "Precios por granel, kilo, ½ kilo y ¼ kilo para cada necesidad.",
   },
   {
-    icon: Truck,
+    icon: FaTruck,
     title: "Siempre al día",
     text: "Lista de precios actualizada directamente por la granja.",
   },
@@ -60,18 +67,18 @@ export default async function HomePage() {
           aria-hidden
           className="pointer-events-none absolute -right-32 -top-32 size-[34rem] rounded-full bg-primary/10 blur-3xl"
         />
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
-          <div className="space-y-6">
-          
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-24">
+          <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both">
             <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-5xl lg:text-6xl">
               {siteConfig.heroTitle}
             </h1>
             <p className="max-w-md text-lg text-muted-foreground text-pretty">
               {siteConfig.heroSubtitle}
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap sm:items-center">
               <Button
                 render={<Link href="/productos" />}
+                nativeButton={false}
                 size="lg"
                 className="h-12 px-6 text-base"
               >
@@ -80,6 +87,7 @@ export default async function HomePage() {
               </Button>
               <Button
                 render={<Link href="#categorias" />}
+                nativeButton={false}
                 size="lg"
                 variant="outline"
                 className="h-12 px-6 text-base"
@@ -90,7 +98,7 @@ export default async function HomePage() {
           </div>
 
           {/* Decorative composition */}
-          <div className="relative hidden lg:block">
+          <div className="relative hidden lg:block animate-in fade-in-0 zoom-in-95 duration-700 delay-200 fill-mode-both">
             <div className="relative aspect-square overflow-hidden rounded-3xl bg-linear-to-br from-primary to-[oklch(0.24_0.06_255)] p-8 shadow-xl">
               <Logo
                 aria-hidden
@@ -137,6 +145,7 @@ export default async function HomePage() {
           </div>
           <Button
             render={<Link href="/productos" />}
+            nativeButton={false}
             variant="ghost"
             className="hidden sm:inline-flex"
           >
@@ -145,19 +154,20 @@ export default async function HomePage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {categories.map(([name, count]) => {
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {categories.map(([name, count], i) => {
             const Icon = categoryIcon(name);
             return (
               <Link
                 key={name}
                 href={`/productos?categoria=${encodeURIComponent(name)}`}
-                className="group relative overflow-hidden rounded-2xl border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="group relative overflow-hidden rounded-2xl border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30 sm:p-6 animate-in fade-in-0 slide-in-from-bottom-4 fill-mode-both duration-500"
+                style={{ animationDelay: `${Math.min(i * 60, 180)}ms` }}
               >
-                <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <Icon className="size-6" />
+                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground sm:size-12">
+                  <Icon className="size-5 sm:size-6" />
                 </div>
-                <h3 className="mt-4 font-display text-xl font-semibold">
+                <h3 className="mt-4 font-display text-lg font-semibold sm:text-xl">
                   {name}
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -165,7 +175,7 @@ export default async function HomePage() {
                     ? `${count} ${count === 1 ? "producto" : "productos"}`
                     : "Próximamente"}
                 </p>
-                <ArrowRight className="absolute right-6 top-6 size-5 text-muted-foreground/40 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                <ArrowRight className="absolute right-5 top-5 size-4 text-muted-foreground/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary sm:right-6 sm:top-6 sm:size-5" />
               </Link>
             );
           })}
@@ -174,9 +184,13 @@ export default async function HomePage() {
 
       {/* Value props */}
       <section className="border-y bg-secondary/40">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-16 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
-          {VALUE_PROPS.map((vp) => (
-            <div key={vp.title} className="space-y-3">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-16 sm:px-6 lg:grid-cols-4">
+          {VALUE_PROPS.map((vp, i) => (
+            <div
+              key={vp.title}
+              className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-4 fill-mode-both duration-500"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
               <div className="flex size-11 items-center justify-center rounded-xl bg-background text-primary shadow-sm">
                 <vp.icon className="size-5" />
               </div>
@@ -207,6 +221,7 @@ export default async function HomePage() {
           </p>
           <Button
             render={<Link href="/productos" />}
+            nativeButton={false}
             size="lg"
             variant="secondary"
             className="mt-6 h-12 px-6 text-base"
@@ -219,28 +234,5 @@ export default async function HomePage() {
 
       <SiteFooter />
     </>
-  );
-}
-
-function SiteFooter() {
-  return (
-    <footer className="mt-auto border-t bg-primary text-primary-foreground">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-10 sm:flex-row sm:px-6">
-        <div className="flex items-center gap-3">
-          <Logo className="size-9 text-primary-foreground" />
-          <div className="leading-tight">
-            <p className="font-display text-lg font-semibold uppercase tracking-wide">
-              {siteConfig.name}
-            </p>
-            <p className="text-xs uppercase tracking-wider text-primary-foreground/70">
-              {siteConfig.kicker}
-            </p>
-          </div>
-        </div>
-        <p className="text-sm text-primary-foreground/80">
-          © {new Date().getFullYear()} {siteConfig.name}
-        </p>
-      </div>
-    </footer>
   );
 }

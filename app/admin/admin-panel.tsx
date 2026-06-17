@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  Save,
 } from "lucide-react";
 import {
   Card,
@@ -38,7 +40,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/format";
-import { PRICE_FIELDS, type Product } from "@/lib/types";
+import { PRICE_FIELDS, type Product, type SiteSettings } from "@/lib/types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Preview = {
   file: File;
@@ -52,9 +56,11 @@ const ROWS_PER_PAGE = 10;
 export function AdminPanel({
   currentCount,
   lastUploadAt,
+  settings,
 }: {
   currentCount: number;
   lastUploadAt: string | null;
+  settings: SiteSettings;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -212,13 +218,156 @@ export function AdminPanel({
       </Card>
 
       <PreviewDialog
+        key={preview ? `${preview.file.name}-${preview.count}` : "empty"}
         preview={preview}
         saving={saving}
         currentCount={currentCount}
         onCancel={() => setPreview(null)}
         onConfirm={handleConfirm}
       />
+
+      <SettingsCard initial={settings} />
     </div>
+  );
+}
+
+const COLOR_PRESETS: { name: string; hue: number }[] = [
+  { name: "Borgoña", hue: 5 },
+  { name: "Terracota", hue: 25 },
+  { name: "Ámbar", hue: 50 },
+  { name: "Oliva", hue: 85 },
+  { name: "Bosque", hue: 130 },
+  { name: "Esmeralda", hue: 158 },
+  { name: "Teal", hue: 180 },
+  { name: "Cerúleo", hue: 210 },
+  { name: "Marino", hue: 255 },
+  { name: "Índigo", hue: 270 },
+  { name: "Violeta", hue: 295 },
+  { name: "Rosa", hue: 340 },
+];
+
+function SettingsCard({ initial }: { initial: SiteSettings }) {
+  const [whatsapp, setWhatsapp] = useState(initial.whatsapp ?? "");
+  const [tagline, setTagline] = useState(initial.tagline ?? "");
+  const [hue, setHue] = useState<number>(initial.primaryHue ?? 255);
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsapp, tagline, primaryHue: hue }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error("No se pudo guardar", { description: data.error });
+        return;
+      }
+      toast.success("Ajustes guardados", {
+        description: "Recarga la página para ver el nuevo color.",
+      });
+    } catch {
+      toast.error("Error de conexión");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const previewColor = `oklch(0.34 0.078 ${hue})`;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="size-4" />
+          Ajustes del sitio
+        </CardTitle>
+        <CardDescription>
+          Cambios visibles en el sitio público de inmediato.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="wa-number">Número de WhatsApp</Label>
+          <Input
+            id="wa-number"
+            type="tel"
+            placeholder="50688887777"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Formato internacional sin espacios ni guiones, ej: 50688887777
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="tagline">Eslogan del catálogo</Label>
+          <Input
+            id="tagline"
+            placeholder="Lista de precios"
+            value={tagline}
+            onChange={(e) => setTagline(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Color principal</Label>
+            <span
+              className="size-6 rounded-full border shadow-sm"
+              style={{ background: previewColor }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.hue}
+                type="button"
+                title={preset.name}
+                onClick={() => setHue(preset.hue)}
+                className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
+                  hue === preset.hue
+                    ? "border-primary bg-primary/5 font-medium text-primary"
+                    : "border-transparent hover:border-muted-foreground/30"
+                }`}
+              >
+                <span
+                  className="block size-8 rounded-full shadow-sm"
+                  style={{ background: `oklch(0.34 0.078 ${preset.hue})` }}
+                />
+                {preset.name}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={0}
+              max={360}
+              value={hue}
+              onChange={(e) => setHue(Number(e.target.value))}
+              className="h-2 w-full cursor-pointer accent-primary"
+              style={{ accentColor: previewColor }}
+            />
+            <span className="w-8 text-right text-xs tabular-nums text-muted-foreground">
+              {hue}°
+            </span>
+          </div>
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+          {saving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          Guardar ajustes
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -236,11 +385,6 @@ function PreviewDialog({
   onConfirm: () => void;
 }) {
   const [page, setPage] = useState(0);
-
-  // Reset to the first page whenever a new file is previewed.
-  useEffect(() => {
-    setPage(0);
-  }, [preview]);
 
   const products = preview?.products ?? [];
   const total = products.length;
