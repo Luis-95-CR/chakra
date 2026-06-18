@@ -218,7 +218,7 @@ export function CartProvider({
     const lines = okItems.map((i) => {
       if (i.priceKey === "priceBulk") {
         const weight = i.grams ? ` · ${formatGrams(i.grams)}` : "";
-        return `• ${i.product.name} (Granel${weight}) — ${formatPrice(i.price)} (ref.)`;
+        return `• ${i.product.name} (Granel${weight}) — ${formatPrice(i.price)}`;
       }
       const label = PRICE_FIELDS.find((f) => f.key === i.priceKey)?.label ?? i.priceKey;
       return `• ${i.product.name} (${label}) x${i.quantity} — ${formatPrice(i.price * i.quantity)}`;
