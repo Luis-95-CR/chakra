@@ -32,7 +32,7 @@ export function LoginForm() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "No se pudo iniciar sesión.");
+        setError(data.error ?? "No se pudo iniciar sesion.");
         return;
       }
       router.refresh();
@@ -45,7 +45,7 @@ export function LoginForm() {
 
   return (
     <Card className="w-full max-w-sm">
-      <CardHeader className="items-center text-center">
+      <CardHeader className="items-center justify-items-center text-center">
         <span className="mb-2 flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Lock className="size-5" />
         </span>
@@ -56,7 +56,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="password">Contraseña</Label>
             <Input
               id="password"
@@ -66,10 +66,13 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
             />
+            <p
+              className="min-h-[1em] text-xs font-medium text-destructive transition-opacity"
+              style={{ opacity: error ? 1 : 0 }}
+            >
+              {error}
+            </p>
           </div>
-          {error && (
-            <p className="text-sm font-medium text-destructive">{error}</p>
-          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="size-4 animate-spin" />}
             Ingresar

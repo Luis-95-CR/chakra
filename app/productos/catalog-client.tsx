@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, PackageOpen, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProductCard } from "@/components/product-card";
 import { categoryIcon } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { useCartUI } from "@/lib/cart-context";
 import type { Product } from "@/lib/types";
 
 const ALL = "__all__";
@@ -13,24 +15,42 @@ const ALL = "__all__";
 export function CatalogClient({
   products,
   initialCategory,
+  initialQuery,
 }: {
   products: Product[];
   initialCategory: string | null;
+  initialQuery?: string | null;
 }) {
+  const router = useRouter();
+  const { pendingSearch, setPendingSearch } = useCartUI();
+
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const p of products) if (p.category) set.add(p.category);
     return Array.from(set).sort((a, b) => a.localeCompare(b, "es"));
   }, [products]);
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery ?? "");
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [category, setCategory] = useState<string>(
     initialCategory && categories.includes(initialCategory)
       ? initialCategory
       : ALL,
   );
 
-  const q = query.trim().toLowerCase();
+  useEffect(() => {
+    if (!pendingSearch) return;
+    setQuery(pendingSearch);
+    setDebouncedQuery(pendingSearch);
+    setPendingSearch(null);
+  }, [pendingSearch, setPendingSearch]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), 150);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  const q = debouncedQuery.trim().toLowerCase();
   const matches = useMemo(() => {
     return products.filter((p) => {
       if (category !== ALL && p.category !== category) return false;
@@ -103,9 +123,11 @@ export function CatalogClient({
             type="button"
             onClick={() => {
               setQuery("");
+              setDebouncedQuery("");
               setCategory(ALL);
+              router.replace("/productos", { scroll: false });
             }}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="cursor-pointer inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <X className="size-3.5" />
             Limpiar
@@ -146,7 +168,7 @@ export function CatalogClient({
 
 function ProductGrid({ products }: { products: Product[] }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((product, i) => (
         <div
           key={product.id}
@@ -176,7 +198,7 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+        "cursor-pointer inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
         active
           ? "border-primary bg-primary text-primary-foreground"
           : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",

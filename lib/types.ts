@@ -10,6 +10,8 @@ export type Product = {
   pricePerKilo: number | null; // Precio 1 Kilo
   priceHalfKilo: number | null; // Precio Medio Kilo
   price250g: number | null; // Precio 250 Gramos
+  /** When true, hidden from the public catalog but kept in storage. */
+  disabled?: boolean;
 };
 
 /** The whole catalog stored as a single document. */
@@ -34,10 +36,23 @@ export const PRICE_FIELDS = [
 
 export type PriceFieldKey = (typeof PRICE_FIELDS)[number]["key"];
 
+export type CartItem = {
+  productId: string;
+  name: string;
+  priceKey: PriceFieldKey;
+  quantity: number;
+  /** Weight in grams — only set when priceKey === "priceBulk". */
+  grams?: number;
+};
+
 /** Site-wide settings editable from the admin panel. */
 export type SiteSettings = {
   whatsapp?: string;
   tagline?: string;
   /** Primary color hue (0–360). Drives the whole primary palette via oklch. */
   primaryHue?: number;
+  /** Primary color lightness (0–1). Default 0.58. */
+  primaryLightness?: number;
+  /** Primary color chroma (0–0.4). Default 0.19. */
+  primaryChroma?: number;
 };

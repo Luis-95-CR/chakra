@@ -14,8 +14,6 @@ import { getCatalog } from "@/lib/store";
 import { categoryIcon } from "@/lib/categories";
 import { siteConfig } from "@/lib/config";
 
-export const dynamic = "force-dynamic";
-
 // Default categories shown when the catalog is still empty.
 // Fixed trio shown in the hero composition (the farm's three animal sources).
 const HERO_CATEGORIES = ["Res", "Cerdo", "Pollo"];

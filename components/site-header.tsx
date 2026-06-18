@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ShoppingCart } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { siteConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
+import { useCart, useCartUI } from "@/lib/cart-context";
 
 const NAV = [
   { href: "/", label: "Inicio" },
@@ -13,6 +15,8 @@ const NAV = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { okCount } = useCart();
+  const { openCart } = useCartUI();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-md">
@@ -29,28 +33,46 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-3 sm:gap-8">
-          {NAV.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "relative px-1 py-2 text-xs font-semibold sm:text-sm transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300",
-                  active
-                    ? "text-foreground after:w-full"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="flex items-center gap-3 sm:gap-6">
+          <nav className="flex items-center gap-3 sm:gap-8">
+            {NAV.map((item) => {
+              const active =
+                item.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "relative px-1 py-2 text-xs font-semibold sm:text-sm transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300",
+                    active
+                      ? "text-foreground after:w-full"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {!pathname.startsWith("/admin") && (
+            <button
+              type="button"
+              onClick={openCart}
+              aria-label="Carrito"
+              className="relative flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <ShoppingCart className="size-5" />
+              {okCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {okCount > 9 ? "9+" : okCount}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

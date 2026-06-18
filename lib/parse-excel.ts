@@ -1,5 +1,7 @@
-import * as XLSX from "xlsx";
+import "server-only";
+import ExcelJS from "exceljs";
 import type { Product } from "./types";
+import { fnv1a, normalize } from "./text";
 
 /** Result of parsing an uploaded spreadsheet. */
 export type ParseResult = {
@@ -21,18 +23,8 @@ const COLUMN_ALIASES: Record<keyof Product, string[]> = {
   pricePerKilo: ["precio 1 kilo", "precio kilo", "1 kilo", "kilo"],
   priceHalfKilo: ["precio medio kilo", "medio kilo", "1/2 kilo"],
   price250g: ["precio 250 gramos", "250 gramos", "250 g", "250g"],
+  disabled: [],
 };
-
-/** Lowercases, trims and strips accents for tolerant header matching. */
-function normalize(value: string): string {
-  return value
-    .toString()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip diacritics
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 /** Parses a number that may use comma decimals, currency symbols, etc. */
 function parsePrice(value: unknown): number | null {
@@ -47,38 +39,76 @@ function parsePrice(value: unknown): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
-let cuidCounter = 0;
-function nextId(): string {
-  cuidCounter += 1;
-  return `p${Date.now().toString(36)}${cuidCounter.toString(36)}`;
+/** Stable ID derived from category + name so re-uploads don't invalidate carts.
+ *  Collision suffix (-2, -3…) handles duplicate name+category rows. */
+function productId(category: string, name: string, seen: Set<string>): string {
+  const key = normalize(category + "|" + name);
+  const base = fnv1a(key);
+  let id = base;
+  let n = 2;
+  while (seen.has(id)) id = `${base}-${n++}`;
+  seen.add(id);
+  return id;
+}
+
+/** Extracts a plain JS value from an ExcelJS cell (handles formulas, rich text). */
+function cellValue(raw: unknown): unknown {
+  if (raw === null || raw === undefined) return "";
+  if (typeof raw !== "object") return raw;
+  // formula cell: { formula, result }
+  if ("formula" in raw) return (raw as { result?: unknown }).result ?? "";
+  // rich text: { richText: [{ text }] }
+  if ("richText" in raw)
+    return (raw as { richText: { text: string }[] }).richText
+      .map((r) => r.text)
+      .join("");
+  // hyperlink: { text, hyperlink }
+  if ("text" in raw) return (raw as { text: string }).text;
+  return "";
 }
 
 /**
  * Parses the first sheet of an .xlsx/.xls file into products.
  * Throws ParseError when required columns are missing or there are no rows.
  */
-export function parseExcel(buffer: ArrayBuffer): ParseResult {
-  let workbook: XLSX.WorkBook;
+export async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
+  const wb = new ExcelJS.Workbook();
   try {
-    workbook = XLSX.read(buffer, { type: "array" });
+    await wb.xlsx.load(buffer);
   } catch {
     throw new ParseError("No se pudo leer el archivo. ¿Es un Excel válido?");
   }
 
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) throw new ParseError("El archivo no tiene ninguna hoja.");
+  const ws = wb.worksheets[0];
+  if (!ws) throw new ParseError("El archivo no tiene ninguna hoja.");
 
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(
-    workbook.Sheets[sheetName],
-    { defval: "" },
-  );
+  // row.values is 1-based (index 0 is undefined); slice(1) normalizes it.
+  const rawHeaders = (ws.getRow(1).values as unknown[]).slice(1);
+  const headers = rawHeaders.map((v) => String(cellValue(v)));
+
+  if (!headers.some(Boolean)) {
+    throw new ParseError("La hoja está vacía: no hay filas de productos.");
+  }
+
+  // Build row objects keyed by header string, same shape as xlsx's sheet_to_json.
+  const rows: Record<string, unknown>[] = [];
+  ws.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    const vals = (row.values as unknown[]).slice(1);
+    const obj: Record<string, unknown> = {};
+    headers.forEach((header, i) => {
+      obj[header] = cellValue(vals[i]);
+    });
+    rows.push(obj);
+  });
+
   if (rows.length === 0) {
     throw new ParseError("La hoja está vacía: no hay filas de productos.");
   }
 
   // Build a map from normalized header -> the actual header string in the file.
   const headerLookup = new Map<string, string>();
-  for (const header of Object.keys(rows[0])) {
+  for (const header of headers) {
     headerLookup.set(normalize(header), header);
   }
 
@@ -117,6 +147,7 @@ export function parseExcel(buffer: ArrayBuffer): ParseResult {
 
   const warnings: string[] = [];
   const products: Product[] = [];
+  const seenIds = new Set<string>();
 
   rows.forEach((row, index) => {
     const raw = (field: keyof Product): unknown =>
@@ -132,9 +163,10 @@ export function parseExcel(buffer: ArrayBuffer): ParseResult {
       return;
     }
 
+    const category = str("category");
     products.push({
-      id: nextId(),
-      category: str("category"),
+      id: productId(category, name, seenIds),
+      category,
       name,
       description: str("description"),
       priceBulk: parsePrice(raw("priceBulk")),

@@ -5,13 +5,10 @@ import { getCatalog, getSettings } from "@/lib/store";
 import { formatDate } from "@/lib/format";
 import { siteConfig } from "@/lib/config";
 
-// Always render fresh so a new upload shows up immediately.
-export const dynamic = "force-dynamic";
-
 export default async function ProductosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categoria?: string }>;
+  searchParams: Promise<{ categoria?: string; q?: string }>;
 }) {
   const [{ products, lastUploadAt }, settings, params] = await Promise.all([
     getCatalog(),
@@ -45,8 +42,10 @@ export default async function ProductosPage({
         </div>
 
         <CatalogClient
-          products={products}
+          key={`${params.q ?? ""}|${params.categoria ?? ""}`}
+          products={products.filter((p) => !p.disabled)}
           initialCategory={params.categoria ?? null}
+          initialQuery={params.q ?? null}
         />
       </main>
 

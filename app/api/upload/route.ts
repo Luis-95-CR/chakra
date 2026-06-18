@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAuthenticated } from "@/lib/session";
 import { parseExcel, ParseError } from "@/lib/parse-excel";
 import { saveCatalog } from "@/lib/store";
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
   let parsed;
   try {
     const buffer = await file.arrayBuffer();
-    parsed = parseExcel(buffer);
+    parsed = await parseExcel(buffer);
   } catch (error) {
     const message =
       error instanceof ParseError
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
     products: parsed.products,
     lastUploadAt: new Date().toISOString(),
   });
+  revalidateTag("catalog", { expire: 0 });
 
   return NextResponse.json({
     saved: true,

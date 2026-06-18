@@ -17,6 +17,16 @@ const dateFormatter = new Intl.DateTimeFormat(siteConfig.locale, {
   timeStyle: "short",
 });
 
+/** Formats a gram amount as "500g" or "1.5kg". */
+export function formatGrams(g: number): string {
+  return g >= 1000 ? `${g / 1000}kg` : `${g}g`;
+}
+
+/** Rounds grams to the nearest 10, minimum 100. */
+export function roundGrams(g: number): number {
+  return Math.max(100, Math.round(g / 10) * 10);
+}
+
 /** Formats an ISO timestamp for the "last updated" label. */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";

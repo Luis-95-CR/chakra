@@ -3,8 +3,9 @@ import { Geist, Geist_Mono, Oswald } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/lib/config";
-import { getSettings } from "@/lib/store";
-import { WhatsAppButton } from "@/components/whatsapp-button";
+import { getCatalog, getSettings } from "@/lib/store";
+import { CartProvider } from "@/lib/cart-context";
+import { CartDrawer } from "@/components/cart-drawer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,16 +33,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function primaryColorStyle(hue: number): string {
-  const h = hue;
+function primaryColorStyle(hue: number, lightness: number, chroma: number): string {
   return [
     `:root{`,
-    `--primary:oklch(0.34 0.078 ${h});`,
-    `--primary-foreground:oklch(0.98 0.005 ${h});`,
-    `--ring:oklch(0.34 0.078 ${h});`,
-    `--accent:oklch(0.92 0.03 ${h});`,
-    `--accent-foreground:oklch(0.34 0.078 ${h});`,
-    `--secondary-foreground:oklch(0.32 0.05 ${h});`,
+    `--primary:oklch(${lightness} ${chroma} ${hue});`,
+    `--primary-foreground:oklch(0.98 0.005 ${hue});`,
+    `--ring:oklch(${lightness} ${chroma} ${hue});`,
+    `--accent:oklch(0.94 0.04 ${hue});`,
+    `--accent-foreground:oklch(0.34 0.078 ${hue});`,
+    `--secondary-foreground:oklch(0.32 0.05 ${hue});`,
     `}`,
   ].join("");
 }
@@ -51,7 +51,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const settings = await getSettings();
+  const [settings, catalog] = await Promise.all([getSettings(), getCatalog()]);
+  const products = catalog.products.filter((p) => !p.disabled);
   const waPhone = settings.whatsapp ?? siteConfig.whatsapp;
 
   return (
@@ -59,12 +60,16 @@ export default async function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} ${displayFont.variable} h-full antialiased`}
     >
-      {settings.primaryHue != null && (
-        <style dangerouslySetInnerHTML={{ __html: primaryColorStyle(settings.primaryHue) }} />
-      )}
+      <head>
+        {settings.primaryHue != null && (
+          <style dangerouslySetInnerHTML={{ __html: primaryColorStyle(settings.primaryHue, settings.primaryLightness ?? 0.58, settings.primaryChroma ?? 0.19) }} />
+        )}
+      </head>
       <body className="min-h-full flex flex-col bg-background">
-        {children}
-        {waPhone && <WhatsAppButton phone={waPhone} />}
+        <CartProvider products={products} waPhone={waPhone}>
+          {children}
+          <CartDrawer />
+        </CartProvider>
         <Toaster richColors position="top-center" />
       </body>
     </html>

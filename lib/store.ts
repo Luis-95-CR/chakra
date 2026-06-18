@@ -1,4 +1,6 @@
 import "server-only";
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { Redis } from "@upstash/redis";
@@ -41,12 +43,43 @@ async function writeLocal(catalog: Catalog): Promise<void> {
 }
 
 /** Reads the current catalog. Never throws: returns an empty catalog instead. */
-export async function getCatalog(): Promise<Catalog> {
-  if (redis) {
-    const data = await redis.get<Catalog>(CATALOG_KEY);
-    return data ?? EMPTY_CATALOG;
-  }
-  return readLocal();
+export const getCatalog = cache(unstable_cache(
+  async (): Promise<Catalog> => {
+    if (redis) {
+      const data = await redis.get<Catalog>(CATALOG_KEY);
+      return data ?? EMPTY_CATALOG;
+    }
+    return readLocal();
+  },
+  ["catalog"],
+  { tags: ["catalog"] },
+));
+
+/** Updates a single product by id. Returns false if not found. */
+export async function updateProduct(id: string, patch: Partial<import("./types").Product>): Promise<boolean> {
+  const catalog: Catalog = await getCatalog();
+  const idx = catalog.products.findIndex((p) => p.id === id);
+  if (idx === -1) return false;
+  const products = [...catalog.products];
+  products[idx] = { ...products[idx], ...patch, id };
+  await saveCatalog({ ...catalog, products, lastUploadAt: new Date().toISOString() });
+  return true;
+}
+
+/** Deletes a product by id. Returns false if not found. */
+export async function deleteProduct(id: string): Promise<boolean> {
+  const catalog: Catalog = await getCatalog();
+  const idx = catalog.products.findIndex((p) => p.id === id);
+  if (idx === -1) return false;
+  const products = catalog.products.filter((_, i) => i !== idx);
+  await saveCatalog({ ...catalog, products, lastUploadAt: new Date().toISOString() });
+  return true;
+}
+
+/** Appends a new product to the catalog. */
+export async function addProduct(product: import("./types").Product): Promise<void> {
+  const catalog: Catalog = await getCatalog();
+  await saveCatalog({ ...catalog, products: [...catalog.products, product], lastUploadAt: new Date().toISOString() });
 }
 
 /** Replaces the entire catalog with a new set of products. */
@@ -64,18 +97,22 @@ const SETTINGS_KEY = "settings";
 const settingsFile = path.join(process.cwd(), ".data", "settings.json");
 
 /** Reads the current site settings. Never throws: returns empty object instead. */
-export async function getSettings(): Promise<SiteSettings> {
-  if (redis) {
-    const data = await redis.get<SiteSettings>(SETTINGS_KEY);
-    return data ?? {};
-  }
-  try {
-    const raw = await fs.readFile(settingsFile, "utf8");
-    return JSON.parse(raw) as SiteSettings;
-  } catch {
-    return {};
-  }
-}
+export const getSettings = cache(unstable_cache(
+  async (): Promise<SiteSettings> => {
+    if (redis) {
+      const data = await redis.get<SiteSettings>(SETTINGS_KEY);
+      return data ?? {};
+    }
+    try {
+      const raw = await fs.readFile(settingsFile, "utf8");
+      return JSON.parse(raw) as SiteSettings;
+    } catch {
+      return {};
+    }
+  },
+  ["settings"],
+  { tags: ["settings"] },
+));
 
 /** Persists site settings. */
 export async function saveSettings(settings: SiteSettings): Promise<void> {
