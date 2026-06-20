@@ -38,7 +38,8 @@ function siteUrl(): string {
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const tagline = settings.tagline ?? siteConfig.tagline;
-  const title = `${siteConfig.name} — ${tagline}`;
+  // ~57 chars: fills the SERP/title space better than the bare brand + tagline.
+  const title = `${siteConfig.name} — ${tagline} de res, cerdo y pollo fresco`;
   const description = siteConfig.heroSubtitle;
 
   return {
