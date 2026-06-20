@@ -81,18 +81,23 @@ export function CatalogClient({
 
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
-      <div className="sticky top-16 z-10 -mx-4 space-y-4 border-b bg-background/90 px-4 py-4 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:px-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar producto…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-11 pl-9"
-            aria-label="Buscar producto"
-          />
+      {/* Toolbar — on mobile the wrapper is `display:contents` so it adds no
+          box of its own; that makes the search's sticky containing block the
+          tall root (it stays pinned through the whole list) while the chips
+          scroll away. On sm+ it becomes a normal sticky card holding both. */}
+      <div className="contents space-y-4 sm:block sm:sticky sm:top-21.25 sm:z-10 sm:rounded-2xl sm:border sm:bg-background/85 sm:px-5 sm:py-4 sm:shadow-premium sm:backdrop-blur-xl">
+        <div className="sticky top-16.25 z-20 -mx-4 border-b bg-background/85 px-4 py-4 backdrop-blur-xl sm:static sm:z-auto sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar producto…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-12 rounded-xl pl-10 text-base"
+              aria-label="Buscar producto"
+            />
+          </div>
         </div>
 
         {categories.length > 0 && (
@@ -142,17 +147,18 @@ export function CatalogClient({
           {grouped.map(([name, items]) => {
             const Icon = categoryIcon(name);
             return (
-              <section key={name} className="space-y-4">
-                <div className="flex items-center gap-3 border-b pb-3">
-                  <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-4" />
+              <section key={name} className="space-y-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10">
+                    <Icon className="size-5" />
                   </span>
-                  <h2 className="font-display text-xl font-semibold tracking-tight">
+                  <h2 className="font-display text-2xl font-semibold tracking-tight">
                     {name}
                   </h2>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
                     {items.length}
                   </span>
+                  <span aria-hidden className="ml-1 hidden h-px flex-1 rule-gold opacity-40 sm:block" />
                 </div>
                 <ProductGrid products={items} />
               </section>
@@ -198,10 +204,10 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "cursor-pointer inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+        "cursor-pointer inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-all",
         active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
+          ? "border-primary bg-primary text-primary-foreground shadow-sm"
+          : "border-border bg-card text-muted-foreground hover:-translate-y-0.5 hover:border-primary/40 hover:text-foreground",
       )}
     >
       {icon}
@@ -212,18 +218,20 @@ function Chip({
 
 function EmptyState({ hasProducts }: { hasProducts: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-20 text-center">
-      <PackageOpen className="size-10 text-muted-foreground" />
-      <p className="text-base font-medium">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card/50 py-24 text-center">
+      <span className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10">
+        <PackageOpen className="size-8" />
+      </span>
+      <p className="mt-1 font-display text-xl font-semibold tracking-tight">
         {hasProducts
-          ? "No hay productos que coincidan con tu búsqueda."
-          : "Aún no hay productos cargados."}
+          ? "Sin coincidencias"
+          : "Aún no hay productos cargados"}
       </p>
-      {!hasProducts && (
-        <p className="text-sm text-muted-foreground">
-          El administrador puede cargar la lista de precios desde un Excel.
-        </p>
-      )}
+      <p className="max-w-xs text-sm text-muted-foreground">
+        {hasProducts
+          ? "Probá con otro término o quitá los filtros."
+          : "El administrador puede cargar la lista de precios desde un Excel."}
+      </p>
     </div>
   );
 }

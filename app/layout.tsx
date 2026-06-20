@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Oswald } from "next/font/google";
+import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/lib/config";
 import { getCatalog, getSettings } from "@/lib/store";
 import { CartProvider } from "@/lib/cart-context";
 import { CartDrawer } from "@/components/cart-drawer";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,19 +18,47 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Condensed grotesque for headings — athletic/emblem feel matching the mascot.
-const displayFont = Oswald({
+// Editorial old-style serif for headlines & prices — heritage craft-butcher
+// voice with optical sizing for a premium, hand-set feel.
+const displayFont = Fraunces({
   variable: "--font-display-serif",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  axes: ["opsz", "SOFT"],
+  style: ["normal", "italic"],
 });
+
+// Resolve the public origin so social cards (WhatsApp, etc.) get absolute URLs.
+function siteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return "https://la-chakra.org";
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const tagline = settings.tagline ?? siteConfig.tagline;
+  const title = `${siteConfig.name} — ${tagline}`;
+  const description = siteConfig.heroSubtitle;
+
   return {
-    title: `${siteConfig.name} — ${tagline}`,
-    description: `Lista de precios de ${siteConfig.name}.`,
+    metadataBase: new URL(siteUrl()),
+    title,
+    description,
+    // The og:image is supplied automatically by app/opengraph-image.tsx.
+    openGraph: {
+      type: "website",
+      siteName: siteConfig.name,
+      title,
+      description,
+      url: "/",
+      locale: "es_CR",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
@@ -62,10 +91,11 @@ export default async function RootLayout({
     >
       <head>
         {settings.primaryHue != null && (
-          <style dangerouslySetInnerHTML={{ __html: primaryColorStyle(settings.primaryHue, settings.primaryLightness ?? 0.58, settings.primaryChroma ?? 0.19) }} />
+          <style dangerouslySetInnerHTML={{ __html: primaryColorStyle(settings.primaryHue, settings.primaryLightness ?? 0.43, settings.primaryChroma ?? 0.135) }} />
         )}
       </head>
       <body className="min-h-full flex flex-col bg-background">
+        <ScrollToTop />
         <CartProvider products={products} waPhone={waPhone}>
           {children}
           <CartDrawer />

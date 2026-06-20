@@ -47,6 +47,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/format";
+import { siteConfig } from "@/lib/config";
 import { PRICE_FIELDS, type Product, type SiteSettings } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,7 +151,13 @@ export function AdminPanel({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <div className="mb-2 inline-flex items-center gap-3">
+            <span className="h-px w-8 rule-gold" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+              {siteConfig.name}
+            </span>
+          </div>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">
             Panel de administración
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -332,9 +339,9 @@ function HueRing({
 function SettingsCard({ initial }: { initial: SiteSettings }) {
   const [whatsapp, setWhatsapp] = useState(initial.whatsapp ?? "");
   const [tagline, setTagline] = useState(initial.tagline ?? "");
-  const [hue, setHue] = useState<number>(initial.primaryHue ?? 255);
-  const [lightness, setLightness] = useState<number>(initial.primaryLightness ?? 0.52);
-  const [chroma, setChroma] = useState<number>(initial.primaryChroma ?? 0.15);
+  const [hue, setHue] = useState<number>(initial.primaryHue ?? 26);
+  const [lightness, setLightness] = useState<number>(initial.primaryLightness ?? 0.43);
+  const [chroma, setChroma] = useState<number>(initial.primaryChroma ?? 0.135);
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
@@ -576,10 +583,10 @@ function CatalogCard({ products }: { products: Product[] }) {
           </div>
         </div>
 
-        <div className="h-[32rem] overflow-auto rounded-lg border">
+        <div className="h-[32rem] overflow-auto rounded-xl border shadow-sm">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-muted">
-              <TableRow>
+            <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur [&_tr]:border-b-2">
+              <TableRow className="hover:bg-transparent">
                 <TableHead>Categoría</TableHead>
                 <TableHead>Producto</TableHead>
                 {PRICE_FIELDS.map((f) => (
@@ -587,7 +594,7 @@ function CatalogCard({ products }: { products: Product[] }) {
                     {f.label}
                   </TableHead>
                 ))}
-                <TableHead />
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -598,28 +605,30 @@ function CatalogCard({ products }: { products: Product[] }) {
                   </TableCell>
                 </TableRow>
               ) : rows.map((p: Product) => (
-                <TableRow key={p.id} className={p.disabled ? "opacity-50" : undefined}>
-                  <TableCell className="align-top text-sm text-muted-foreground whitespace-nowrap">
-                    {p.category || "—"}
+                <TableRow key={p.id} className={p.disabled ? "opacity-50 even:bg-muted/30" : "even:bg-muted/30"}>
+                  <TableCell className="align-top">
+                    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                      {p.category || "—"}
+                    </span>
                   </TableCell>
-                  <TableCell className="max-w-[16rem] align-top">
+                  <TableCell className="max-w-[16rem] align-top whitespace-normal">
                     <span className={`block font-medium leading-tight ${p.disabled ? "line-through" : ""}`}>{p.name}</span>
                     {p.description && (
                       <span className="block text-xs text-muted-foreground">{p.description}</span>
                     )}
                   </TableCell>
                   {PRICE_FIELDS.map((f) => (
-                    <TableCell key={f.key} className="text-right align-top tabular-nums">
-                      {formatPrice(p[f.key])}
+                    <TableCell key={f.key} className="text-right align-top font-display font-medium tabular-nums">
+                      {p[f.key] != null ? formatPrice(p[f.key]) : <span className="text-muted-foreground/40">—</span>}
                     </TableCell>
                   ))}
                   <TableCell className="align-top">
-                    <div className="flex items-center gap-0.5">
+                    <div className="flex items-center justify-end gap-0.5">
                       <button
                         type="button"
                         onClick={() => handleToggle(p)}
                         disabled={toggling === p.id}
-                        className="cursor-pointer rounded p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                        className="cursor-pointer rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-50"
                         aria-label={p.disabled ? "Activar" : "Desactivar"}
                         title={p.disabled ? "Activar" : "Desactivar"}
                       >
@@ -632,7 +641,7 @@ function CatalogCard({ products }: { products: Product[] }) {
                       <button
                         type="button"
                         onClick={() => setEditing(p)}
-                        className="cursor-pointer rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        className="cursor-pointer rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         aria-label="Editar"
                         title="Editar"
                       >
@@ -641,7 +650,7 @@ function CatalogCard({ products }: { products: Product[] }) {
                       <button
                         type="button"
                         onClick={() => setDeleting(p)}
-                        className="cursor-pointer rounded p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        className="cursor-pointer rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         aria-label="Eliminar"
                         title="Eliminar"
                       >

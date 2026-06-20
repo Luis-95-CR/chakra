@@ -6,6 +6,7 @@ import { X, Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa6";
 import { useCart, useCartUI, type ResolvedItem } from "@/lib/cart-context";
 import { PRICE_FIELDS } from "@/lib/types";
+import { categoryIcon } from "@/lib/categories";
 import { formatGrams, formatPrice, roundGrams } from "@/lib/format";
 
 function GranelInput({ initialGrams, onUpdate }: { initialGrams?: number; onUpdate: (g: number) => void }) {
@@ -25,7 +26,7 @@ function GranelInput({ initialGrams, onUpdate }: { initialGrams?: number; onUpda
         type="number"
         min="100"
         max="1000000"
-        step="10"
+        step="100"
         value={value}
         onFocus={() => setIsFocused(true)}
         onChange={(e) => {
@@ -77,21 +78,23 @@ export function CartDrawer() {
       )}
 
       {/* Panel */}
-      <aside
+      <div
         role="dialog"
         aria-modal="true"
         aria-label="Carrito de pedido"
-        className={`fixed inset-y-0 right-0 z-50 flex w-80 flex-col bg-background shadow-2xl transition-transform duration-300 sm:w-96 ${
+        className={`fixed inset-y-0 right-0 z-50 flex w-[88%] max-w-sm flex-col border-l border-border bg-background shadow-premium-lg transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-5 py-4">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="size-5 text-primary" />
-            <h2 className="font-display text-lg font-semibold">Tu pedido</h2>
+        <div className="flex items-center justify-between border-b bg-muted/40 px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10">
+              <ShoppingCart className="size-4.5" />
+            </span>
+            <h2 className="font-display text-xl font-semibold tracking-tight">Tu pedido</h2>
             {okCount > 0 && (
-              <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+              <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold tabular-nums text-primary-foreground">
                 {okCount}
               </span>
             )}
@@ -120,10 +123,12 @@ export function CartDrawer() {
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-              <ShoppingCart className="size-10 text-muted-foreground/40" />
-              <p className="text-sm font-medium text-muted-foreground">Tu carrito está vacío</p>
-              <p className="text-xs text-muted-foreground/70">
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+              <span className="flex size-16 items-center justify-center rounded-2xl bg-muted text-muted-foreground/60">
+                <ShoppingCart className="size-7" />
+              </span>
+              <p className="mt-1 font-display text-lg font-semibold tracking-tight">Tu carrito está vacío</p>
+              <p className="max-w-56 text-sm text-muted-foreground">
                 Seleccioná los productos que querés pedir
               </p>
             </div>
@@ -134,10 +139,17 @@ export function CartDrawer() {
                 const label = isBulk
                   ? `Granel${item.grams ? ` · ${formatGrams(item.grams)}` : ""}`
                   : PRICE_FIELDS.find((f) => f.key === item.priceKey)?.label ?? item.priceKey;
+                const Icon = categoryIcon(item.product.category);
                 return (
-                  <div key={`${item.productId}-${item.priceKey}`} className="rounded-xl border bg-card p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
+                  <div
+                    key={`${item.productId}-${item.priceKey}`}
+                    className="rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-premium"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/10">
+                        <Icon className="size-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
                         <button
                           type="button"
                           onClick={() => goToProduct(item.product.name)}
@@ -145,7 +157,7 @@ export function CartDrawer() {
                         >
                           {item.product.name}
                         </button>
-                        <span className="inline-block mt-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                           {label}
                         </span>
                       </div>
@@ -153,25 +165,25 @@ export function CartDrawer() {
                         type="button"
                         onClick={() => removeItem(item.productId, item.priceKey)}
                         aria-label="Eliminar"
-                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                        className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                       >
                         <Trash2 className="size-4" />
                       </button>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between">
+                    <div className="mt-3 flex items-center justify-between border-t border-dashed pt-3">
                       {isBulk ? (
                         <GranelInput
                           initialGrams={item.grams}
                           onUpdate={(g) => updateGrams(item.productId, item.priceKey, g)}
                         />
                       ) : (
-                        <div className="flex items-center gap-1 rounded-lg border">
+                        <div className="flex items-center gap-1 rounded-lg border bg-muted/40">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.productId, item.priceKey, item.quantity - 1)}
                             aria-label="Restar"
-                            className="flex size-7 items-center justify-center rounded-l-lg hover:bg-muted transition-colors"
+                            className="flex size-7 items-center justify-center rounded-l-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                           >
                             <Minus className="size-3.5" />
                           </button>
@@ -182,13 +194,13 @@ export function CartDrawer() {
                             type="button"
                             onClick={() => updateQuantity(item.productId, item.priceKey, item.quantity + 1)}
                             aria-label="Sumar"
-                            className="flex size-7 items-center justify-center rounded-r-lg hover:bg-muted transition-colors"
+                            className="flex size-7 items-center justify-center rounded-r-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                           >
                             <Plus className="size-3.5" />
                           </button>
                         </div>
                       )}
-                      <p className="text-sm font-semibold tabular-nums text-foreground">
+                      <p className="font-display text-base font-semibold tabular-nums text-foreground">
                         {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
@@ -253,11 +265,11 @@ export function CartDrawer() {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t px-5 py-4 space-y-3">
+          <div className="border-t bg-muted/40 px-5 py-4 space-y-3">
             {okItems.length > 0 && (
               <div className="flex items-baseline justify-between">
-                <span className="text-sm text-muted-foreground">Total estimado</span>
-                <span className="font-display text-xl font-semibold tabular-nums">
+                <span className="text-sm font-medium text-muted-foreground">Total estimado</span>
+                <span className="font-display text-2xl font-semibold tabular-nums">
                   {formatPrice(totalOk)}
                 </span>
               </div>
@@ -266,7 +278,7 @@ export function CartDrawer() {
               type="button"
               onClick={sendToWhatsApp}
               disabled={okItems.length === 0}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:brightness-110 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
             >
               <FaWhatsapp className="size-5" />
               Pedir por WhatsApp
@@ -283,7 +295,7 @@ export function CartDrawer() {
             )}
           </div>
         )}
-      </aside>
+      </div>
     </>
   );
 }
